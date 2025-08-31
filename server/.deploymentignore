@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.example
+.deployment
+web.config
+npm-debug.log*
+.DS_Store
+
+

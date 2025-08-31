@@ -16,21 +16,37 @@ const Home = () => {
   console.log('user',user)
   const fetchUserDetails = async()=>{
     try {
+        const token = localStorage.getItem('token')
+        
+        // If no token, redirect to login
+        if(!token){
+            navigate("/email")
+            return
+        }
+
         const URL = `${process.env.REACT_APP_BACKEND_URL}/api/user-details`
         const response = await axios({
           url : URL,
-          withCredentials : true
+          withCredentials : true,
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         })
 
         dispatch(setUser(response.data.data))
 
         if(response.data.data.logout){
             dispatch(logout())
+            localStorage.removeItem('token')
             navigate("/email")
         }
         console.log("current user Details",response)
     } catch (error) {
         console.log("error",error)
+        // If authentication fails, redirect to login
+        dispatch(logout())
+        localStorage.removeItem('token')
+        navigate("/email")
     }
   }
 
@@ -40,23 +56,26 @@ const Home = () => {
 
   /***socket connection */
   useEffect(()=>{
-    const socketConnection = io(process.env.REACT_APP_BACKEND_URL,{
-      auth : {
-        token : localStorage.getItem('token')
-      },
-    })
+    // Only establish socket connection if user is authenticated
+    if(user._id && localStorage.getItem('token')){
+      const socketConnection = io(process.env.REACT_APP_BACKEND_URL,{
+        auth : {
+          token : localStorage.getItem('token')
+        },
+      })
 
-    socketConnection.on('onlineUser',(data)=>{
-      console.log(data)
-      dispatch(setOnlineUser(data))
-    })
+      socketConnection.on('onlineUser',(data)=>{
+        console.log(data)
+        dispatch(setOnlineUser(data))
+      })
 
-    dispatch(setSocketConnection(socketConnection))
+      dispatch(setSocketConnection(socketConnection))
 
-    return ()=>{
-      socketConnection.disconnect()
+      return ()=>{
+        socketConnection.disconnect()
+      }
     }
-  },[])
+  },[user._id]) // Depend on user._id to only connect when user is logged in
 
 
   const basePath = location.pathname === '/'

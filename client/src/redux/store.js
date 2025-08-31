@@ -6,4 +6,11 @@ export const store = configureStore({
   reducer: {
         user : userReducer
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['user/setSocketConnection'],
+        ignoredPaths: ['user.socketConnection'],
+      },
+    }),
 })

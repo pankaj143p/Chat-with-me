@@ -2,7 +2,16 @@ const getUserDetailsFromToken = require("../helpers/getUserDetailsFromToken")
 
 async function userDetails(request,response){
     try {
-        const token = request.cookies.token || ""
+        // Try to get token from cookies first, then from Authorization header
+        let token = request.cookies.token || ""
+        
+        // If no token in cookies, check Authorization header
+        if(!token){
+            const authHeader = request.headers.authorization
+            if(authHeader && authHeader.startsWith('Bearer ')){
+                token = authHeader.substring(7) // Remove 'Bearer ' prefix
+            }
+        }
 
         const user = await getUserDetailsFromToken(token)
 
